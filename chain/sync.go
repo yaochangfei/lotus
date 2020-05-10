@@ -473,6 +473,10 @@ func (syncer *Syncer) ValidateTipSet(ctx context.Context, fts *store.FullTipSet)
 			return xerrors.Errorf("validating block %s: %w", b.Cid(), err)
 		}
 
+		if err := syncer.sm.ChainStore().AddToValidatedBlocks(b.Cid()); err != nil {
+			log.Warnf("failed to put block %s in validated blocks store: %w", b.Cid(), err)
+		}
+
 		if err := syncer.sm.ChainStore().AddToTipSetTracker(b.Header); err != nil {
 			return xerrors.Errorf("failed to add validated header to tipset tracker: %w", err)
 		}
@@ -528,6 +532,10 @@ func blockSanityChecks(h *types.BlockHeader) error {
 
 // Should match up with 'Semantical Validation' in validation.md in the spec
 func (syncer *Syncer) ValidateBlock(ctx context.Context, b *types.FullBlock) error {
+	if syncer.store.HasValidatedBlock(b.Cid()) {
+		return nil
+	}
+
 	ctx, span := trace.StartSpan(ctx, "validateBlock")
 	defer span.End()
 	if build.InsecurePoStValidation {

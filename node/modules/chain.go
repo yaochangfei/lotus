@@ -75,6 +75,10 @@ func ChainBlockstore(lc fx.Lifecycle, mctx helpers.MetricsCtx, r repo.LockedRepo
 	return blockstore.NewIdStore(cbs), nil
 }
 
+func ChainValidatedBlocksCache(r repo.LockedRepo) (dtypes.ChainValidatedBlocksCache, error) {
+	return r.Datastore("/validated")
+}
+
 func ChainGCBlockstore(bs dtypes.ChainBlockstore, gcl dtypes.ChainGCLocker) dtypes.ChainGCBlockstore {
 	return blockstore.NewGCBlockstore(bs, gcl)
 }
@@ -83,8 +87,8 @@ func ChainBlockservice(bs dtypes.ChainBlockstore, rem dtypes.ChainExchange) dtyp
 	return blockservice.New(bs, rem)
 }
 
-func ChainStore(lc fx.Lifecycle, bs dtypes.ChainBlockstore, ds dtypes.MetadataDS, syscalls runtime.Syscalls) *store.ChainStore {
-	chain := store.NewChainStore(bs, ds, syscalls)
+func ChainStore(lc fx.Lifecycle, bs dtypes.ChainBlockstore, ds dtypes.MetadataDS, v dtypes.ChainValidatedBlocksCache, syscalls runtime.Syscalls) *store.ChainStore {
+	chain := store.NewChainStoreWithValBlockCache(bs, ds, v, syscalls)
 
 	if err := chain.Load(); err != nil {
 		log.Warnf("loading chain state from disk: %s", err)
