@@ -143,30 +143,40 @@ func (ps pricedSyscalls) VerifySignature(signature crypto.Signature, signer addr
 		return err
 	}
 	ps.chargeGas(c)
+	defer ps.chargeGas(gasOnActorExec)
+
 	return ps.under.VerifySignature(signature, signer, plaintext)
 }
 
 // Hashes input data using blake2b with 256 bit output.
 func (ps pricedSyscalls) HashBlake2b(data []byte) [32]byte {
 	ps.chargeGas(ps.pl.OnHashing(len(data)))
+	defer ps.chargeGas(gasOnActorExec)
+
 	return ps.under.HashBlake2b(data)
 }
 
 // Computes an unsealed sector CID (CommD) from its constituent piece CIDs (CommPs) and sizes.
 func (ps pricedSyscalls) ComputeUnsealedSectorCID(reg abi.RegisteredSealProof, pieces []abi.PieceInfo) (cid.Cid, error) {
 	ps.chargeGas(ps.pl.OnComputeUnsealedSectorCid(reg, pieces))
+	defer ps.chargeGas(gasOnActorExec)
+
 	return ps.under.ComputeUnsealedSectorCID(reg, pieces)
 }
 
 // Verifies a sector seal proof.
 func (ps pricedSyscalls) VerifySeal(vi abi.SealVerifyInfo) error {
 	ps.chargeGas(ps.pl.OnVerifySeal(vi))
+	defer ps.chargeGas(gasOnActorExec)
+
 	return ps.under.VerifySeal(vi)
 }
 
 // Verifies a proof of spacetime.
 func (ps pricedSyscalls) VerifyPoSt(vi abi.WindowPoStVerifyInfo) error {
 	ps.chargeGas(ps.pl.OnVerifyPost(vi))
+	defer ps.chargeGas(gasOnActorExec)
+
 	return ps.under.VerifyPoSt(vi)
 }
 
@@ -182,10 +192,14 @@ func (ps pricedSyscalls) VerifyPoSt(vi abi.WindowPoStVerifyInfo) error {
 // Returns nil and an error if the headers don't prove a fault.
 func (ps pricedSyscalls) VerifyConsensusFault(h1 []byte, h2 []byte, extra []byte) (*runtime.ConsensusFault, error) {
 	ps.chargeGas(ps.pl.OnVerifyConsensusFault())
+	defer ps.chargeGas(gasOnActorExec)
+
 	return ps.under.VerifyConsensusFault(h1, h2, extra)
 }
 
 func (ps pricedSyscalls) BatchVerifySeals(inp map[address.Address][]abi.SealVerifyInfo) (map[address.Address][]bool, error) {
 	ps.chargeGas(newGasCharge("BatchVerifySeals", 0, 0)) // TODO: this is only called by the cron actor. Should we even charge gas?
+	defer ps.chargeGas(gasOnActorExec)
+
 	return ps.under.BatchVerifySeals(inp)
 }
