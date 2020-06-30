@@ -242,7 +242,7 @@ type covar struct {
 	c     float64
 	n     float64
 	m2x   float64
-	m2y
+	m2y   float64
 }
 
 func (cov1 *covar) Covariance() float64 {
